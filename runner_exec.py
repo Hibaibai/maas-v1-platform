@@ -1,4 +1,4 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import subprocess
 import logging
@@ -82,7 +82,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def run():
     server_address = ('0.0.0.0', 9100)
-    httpd = HTTPServer(server_address, Handler)
+    httpd = ThreadingHTTPServer(server_address, Handler)
     logger.info("MaaS Core API starting on port 9100")
     httpd.serve_forever()
 
