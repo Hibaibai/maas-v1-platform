@@ -30,7 +30,8 @@ class Handler(BaseHTTPRequestHandler):
             if action == "sts_identity":
                 result = subprocess.check_output(
                     ["aws", "sts", "get-caller-identity"],
-                    stderr=subprocess.STDOUT
+                    stderr=subprocess.STDOUT,
+                    timeout=60
                 ).decode()
 
                 response = {
@@ -64,11 +65,24 @@ class Handler(BaseHTTPRequestHandler):
             duration = round((time.time() - start_time) * 1000, 2)
             logger.info(f"{action} handled in {duration} ms")
 
+        except subprocess.TimeoutExpired:
+            response = {
+                "requestId": request_id,
+                "success": False,
+                "data": None,
+                "error": "Timeout after 60 seconds"
+            }
+
+            self.send_response(504)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
+
         except Exception as e:
             logger.exception("Request failed")
 
             response = {
-                "requestId": None,
+                "requestId": request_id,
                 "success": False,
                 "data": None,
                 "error": str(e)
